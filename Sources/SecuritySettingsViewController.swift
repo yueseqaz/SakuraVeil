@@ -4,56 +4,58 @@ import Cocoa
 final class SecuritySettingsViewController: NSViewController {
 
     private var comboLabel: NSTextField!
-    private var changeHotkeyButton: NSButton!
     private var passwordStatus: NSTextField!
     private var setPasswordButton: NSButton!
     private var clearPasswordButton: NSButton!
 
+    /// 页面固定尺寸（设置窗口按此自适应高度）
+    static let pageSize = NSSize(width: 500, height: 268)
+
     override func loadView() {
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 540, height: 330))
+        let view = NSView(frame: NSRect(origin: .zero, size: Self.pageSize))
 
         // MARK: 全局快捷键
         addLabel(I18N.t("全局快捷键", "Global hotkey"), to: view,
-                 frame: NSRect(x: 24, y: 290, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 228, width: 200, height: 18), bold: true)
         addLabel(I18N.t("遮屏 / 解除共用同一个组合键；需包含 ⌘ / ⌥ / ⌃ 之一。", "One combo toggles the cover; must include ⌘, ⌥ or ⌃."),
-                 to: view, frame: NSRect(x: 24, y: 270, width: 480, height: 14), small: true)
+                 to: view, frame: NSRect(x: 24, y: 208, width: 452, height: 14), small: true)
 
         comboLabel = NSTextField(labelWithString: "")
-        comboLabel.frame = NSRect(x: 24, y: 218, width: 340, height: 42)
-        comboLabel.font = .monospacedDigitSystemFont(ofSize: 28, weight: .medium)
+        comboLabel.frame = NSRect(x: 24, y: 158, width: 320, height: 40)
+        comboLabel.font = .monospacedDigitSystemFont(ofSize: 27, weight: .medium)
         view.addSubview(comboLabel)
 
-        changeHotkeyButton = NSButton(title: I18N.t("修改快捷键…", "Change hotkey…"),
-                                      target: self, action: #selector(changeHotkey))
+        let changeHotkeyButton = NSButton(title: I18N.t("修改快捷键…", "Change hotkey…"),
+                                          target: self, action: #selector(changeHotkey))
         changeHotkeyButton.bezelStyle = .rounded
-        changeHotkeyButton.frame = NSRect(x: 392, y: 226, width: 124, height: 30)
+        changeHotkeyButton.frame = NSRect(x: 372, y: 164, width: 104, height: 28)
         view.addSubview(changeHotkeyButton)
 
-        addSeparator(to: view, y: 196)
+        addSeparator(to: view, y: 142)
 
         // MARK: 解锁密码
         addLabel(I18N.t("解锁密码", "Unlock password"), to: view,
-                 frame: NSRect(x: 24, y: 166, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 112, width: 200, height: 18), bold: true)
 
         passwordStatus = NSTextField(labelWithString: "")
-        passwordStatus.frame = NSRect(x: 24, y: 140, width: 480, height: 16)
-        passwordStatus.font = .systemFont(ofSize: 12)
+        passwordStatus.frame = NSRect(x: 24, y: 90, width: 452, height: 14)
+        passwordStatus.font = .systemFont(ofSize: 11)
         passwordStatus.textColor = .secondaryLabelColor
         view.addSubview(passwordStatus)
 
         setPasswordButton = NSButton(title: "", target: self, action: #selector(setPassword))
         setPasswordButton.bezelStyle = .rounded
-        setPasswordButton.frame = NSRect(x: 24, y: 100, width: 124, height: 30)
+        setPasswordButton.frame = NSRect(x: 24, y: 52, width: 104, height: 28)
         view.addSubview(setPasswordButton)
 
         clearPasswordButton = NSButton(title: I18N.t("清除密码", "Remove password"),
                                        target: self, action: #selector(clearPassword))
         clearPasswordButton.bezelStyle = .rounded
-        clearPasswordButton.frame = NSRect(x: 156, y: 100, width: 124, height: 30)
+        clearPasswordButton.frame = NSRect(x: 136, y: 52, width: 104, height: 28)
         view.addSubview(clearPasswordButton)
 
-        addLabel(I18N.t("密码只保存在本机 Keychain；遮屏时按任意键唤出输入框，连错 5 次锁定 30 秒。", "Stored only in your Keychain. Press any key while covered to unlock; 5 wrong attempts lock input for 30s."),
-                 to: view, frame: NSRect(x: 24, y: 60, width: 492, height: 14), small: true)
+        addLabel(I18N.t("密码只保存在本机 Keychain；连错 5 次锁定 30 秒。", "Stored only in your Keychain; 5 wrong attempts lock input for 30s."),
+                 to: view, frame: NSRect(x: 24, y: 24, width: 452, height: 14), small: true)
 
         self.view = view
         refresh()
@@ -64,8 +66,8 @@ final class SecuritySettingsViewController: NSViewController {
 
         let hasPassword = KeychainStore.shared.get(forAccount: PasswordPanel.passwordAccount) != nil
         passwordStatus.stringValue = hasPassword
-            ? I18N.t("已设置（存于 Keychain）", "Set (stored in Keychain)")
-            : I18N.t("未设置（遮屏时仅快捷键可解除）", "Not set (hotkey is the only way out)")
+            ? I18N.t("已设置（存于 Keychain）· 遮屏时按任意键唤出输入框", "Set (in Keychain) · press any key while covered to unlock")
+            : I18N.t("未设置 · 遮屏时仅快捷键可解除", "Not set · hotkey is the only way out")
         setPasswordButton.title = hasPassword
             ? I18N.t("修改密码…", "Change password…")
             : I18N.t("设置密码…", "Set password…")
@@ -169,7 +171,7 @@ final class SecuritySettingsViewController: NSViewController {
     }
 
     private func addSeparator(to view: NSView, y: CGFloat) {
-        let box = NSBox(frame: NSRect(x: 24, y: y, width: 492, height: 4))
+        let box = NSBox(frame: NSRect(x: 24, y: y, width: 452, height: 4))
         box.boxType = .separator
         view.addSubview(box)
     }

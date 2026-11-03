@@ -250,7 +250,7 @@ final class CoverContentController {
         label.textColor = NSColor.white.withAlphaComponent(0.95)
         label.alignment = .center
         label.lineBreakMode = .byWordWrapping
-        label.maximumNumberOfLines = 2
+        label.maximumNumberOfLines = 0  // 文案必须展示全：不限行数
         capsule.addSubview(label)
         messageLabel = label
 
@@ -285,22 +285,38 @@ final class CoverContentController {
         guard let capsule = capsuleView, let label = messageLabel else { return }
         let b = container.bounds
         let font = label.font ?? NSFont.systemFont(ofSize: 17)
-        let maxWidth = min(680, b.width * 0.72) - 44
-
-        // TextKit 测量（正确处理中英混排与字体回退），超宽自动折行
         let text = label.stringValue as NSString
-        let bounding = text.boundingRect(
-            with: NSSize(width: maxWidth, height: .greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading],
-            attributes: [.font: font]
-        )
-        let textWidth = min(maxWidth, ceil(bounding.width) + 4)
-        let textHeight = max(ceil(bounding.height), 22)
+        guard text.length > 0 else { return }
 
-        label.frame = NSRect(x: 22, y: 15, width: textWidth, height: textHeight)
-        let capsuleWidth = textWidth + 44
-        let capsuleHeight = textHeight + 30
-        capsule.frame = NSRect(x: b.midX - capsuleWidth / 2, y: 44, width: capsuleWidth, height: capsuleHeight)
+        // 文案必须展示全：测量值偏小（emoji/字体回退）时靠余量兜底，
+        // label 宽度始终给足，文字居中渲染，宁可胶囊略宽也不截字。
+        let padding: CGFloat = 22   // 胶囊左右内边距
+        let slack: CGFloat = 16     // 测量安全余量
+        let maxWidth = min(680, b.width * 0.72) - padding * 2
+        let singleSize = text.size(withAttributes: [.font: font])
+
+        if ceil(singleSize.width) <= maxWidth {
+            // 单行完整展示
+            let textWidth = min(maxWidth, ceil(singleSize.width) + slack)
+            let textHeight = ceil(singleSize.height) + 4
+            label.frame = NSRect(x: padding, y: 15, width: textWidth, height: textHeight)
+            let capsuleWidth = textWidth + padding * 2
+            let capsuleHeight = textHeight + 30
+            capsule.frame = NSRect(x: b.midX - capsuleWidth / 2, y: 44, width: capsuleWidth, height: capsuleHeight)
+        } else {
+            // 折行完整展示（不限行数）
+            let bounding = text.boundingRect(
+                with: NSSize(width: maxWidth, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: [.font: font]
+            )
+            let textWidth = maxWidth + slack
+            let textHeight = ceil(bounding.height) + 8
+            label.frame = NSRect(x: padding, y: 15, width: textWidth, height: textHeight)
+            let capsuleWidth = textWidth + padding * 2 + slack
+            let capsuleHeight = textHeight + 30
+            capsule.frame = NSRect(x: b.midX - capsuleWidth / 2, y: 44, width: capsuleWidth, height: capsuleHeight)
+        }
     }
 
     // MARK: - 定时器

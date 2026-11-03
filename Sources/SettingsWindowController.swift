@@ -19,10 +19,7 @@ final class SettingsTabViewController: NSTabViewController {
         fatalError("不支持从归档初始化")
     }
 
-    var aboutIndex: Int { 2 }
-
     private func addTab(_ vc: NSViewController, label: String, symbol: String) {
-        vc.title = label
         let item = NSTabViewItem(viewController: vc)
         item.label = label
         item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
@@ -35,6 +32,27 @@ final class SettingsTabViewController: NSTabViewController {
         DispatchQueue.main.async { [weak self] in
             self?.view.window?.title = I18N.t("SakuraVeil 设置", "SakuraVeil Settings")
         }
+    }
+
+    /// 切换标签页时，窗口高度贴合当前页内容（顶边不动，动画过渡）。
+    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
+        super.tabView(tabView, didSelect: tabViewItem)
+        DispatchQueue.main.async { [weak self] in
+            self?.fitWindowToContent(of: tabViewItem)
+        }
+    }
+
+    private func fitWindowToContent(of tabViewItem: NSTabViewItem?) {
+        guard let window = view.window,
+              let vc = tabViewItem?.viewController else { return }
+        let contentSize = vc.view.frame.size
+        guard contentSize.width > 0, contentSize.height > 0 else { return }
+        let target = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
+        var frame = window.frame
+        guard abs(frame.height - target.height) > 0.5 else { return }
+        frame.size = target.size
+        frame.origin.y += (window.frame.height - target.height)  // 保持顶边不动
+        window.setFrame(frame, display: true, animate: true)
     }
 }
 
@@ -54,10 +72,5 @@ final class SettingsWindowController: NSWindowController {
 
     required init?(coder: NSCoder) {
         fatalError("不支持从归档初始化")
-    }
-
-    func showAbout() {
-        guard let tabVC = window?.contentViewController as? SettingsTabViewController else { return }
-        tabVC.selectedTabViewItemIndex = tabVC.aboutIndex
     }
 }

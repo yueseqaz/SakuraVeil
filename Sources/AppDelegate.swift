@@ -60,11 +60,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
     }
-
-    @objc private func showAbout() {
-        showSettings()
-        settingsWindowController?.showAbout()
-    }
 }
 
 // MARK: - NSMenuDelegate（每次打开重建，保证状态新鲜）
@@ -89,11 +84,6 @@ extension AppDelegate: NSMenuDelegate {
                                       action: #selector(showSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
-
-        let aboutItem = NSMenuItem(title: I18N.t("关于 SakuraVeil", "About SakuraVeil"),
-                                   action: #selector(showAbout), keyEquivalent: "")
-        aboutItem.target = self
-        menu.addItem(aboutItem)
 
         menu.addItem(.separator())
 
