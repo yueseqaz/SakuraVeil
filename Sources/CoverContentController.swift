@@ -178,11 +178,11 @@ final class CoverContentController {
         let info = NSTextField(labelWithString: "")
         info.alignment = .center
 
-        // 描边之外再叠一层柔和阴影
+        // 白字 + 一层很淡的投影保底可读性（按用户要求不描黑边）
         let shadow = NSShadow()
-        shadow.shadowColor = NSColor.black.withAlphaComponent(0.8)
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.55)
         shadow.shadowOffset = NSSize(width: 0, height: -1)
-        shadow.shadowBlurRadius = 10
+        shadow.shadowBlurRadius = 6
         time.shadow = shadow
         info.shadow = shadow
 
@@ -198,14 +198,14 @@ final class CoverContentController {
         info.frame = NSRect(x: b.midX - 260, y: b.height - topPad - 58 - 16 - 22, width: 520, height: 22)
     }
 
-    /// 字幕式文字：白字 + 浓黑外描边（YouTube 字幕级别），亮壁纸/视频上也清晰，无需整片压边。
-    private static func subtitleString(_ text: String, fontSize: CGFloat, alpha: CGFloat,
-                                       strokeDivider: CGFloat = 8) -> NSAttributedString {
-        NSAttributedString(string: text, attributes: [
+    /// 纯白文字，居中段落样式（attributedString 会覆盖 label 的 alignment，必须自带）。
+    private static func subtitleString(_ text: String, fontSize: CGFloat, alpha: CGFloat) -> NSAttributedString {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        return NSAttributedString(string: text, attributes: [
             .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: fontSize > 20 ? .light : .regular),
             .foregroundColor: NSColor.white.withAlphaComponent(alpha),
-            .strokeColor: NSColor.black.withAlphaComponent(0.8),
-            .strokeWidth: -fontSize / strokeDivider,  // 负值 = 外描边
+            .paragraphStyle: paragraph,
         ])
     }
 
@@ -219,8 +219,7 @@ final class CoverContentController {
             ? I18N.t("已遮屏 \(minutes) 分钟", "covered \(minutes) min")
             : I18N.t("刚刚开始", "just started")
         infoLabel?.attributedStringValue = Self.subtitleString(
-            infoFormatter.string(from: now) + " · " + durationText,
-            fontSize: 15, alpha: 0.92, strokeDivider: 5.5  // 小字用更粗的描边才扛得住亮背景
+            infoFormatter.string(from: now) + " · " + durationText, fontSize: 15, alpha: 0.85
         )
     }
 

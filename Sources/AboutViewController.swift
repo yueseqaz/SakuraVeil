@@ -68,6 +68,7 @@ final class AboutViewController: NSViewController {
         view.addSubview(copyright)
 
         self.view = view
+        preferredContentSize = Self.pageSize  // 供设置窗口贴合高度（子 view 会被拉伸，不能用 frame）
     }
 
     @objc private func openRepo() {

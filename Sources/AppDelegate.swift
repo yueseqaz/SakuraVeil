@@ -58,6 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(nil)
+        settingsWindowController?.syncWindowSize()
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 }

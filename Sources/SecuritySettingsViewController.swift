@@ -58,6 +58,7 @@ final class SecuritySettingsViewController: NSViewController {
                  to: view, frame: NSRect(x: 24, y: 24, width: 452, height: 14), small: true)
 
         self.view = view
+        preferredContentSize = Self.pageSize  // 供设置窗口贴合高度（子 view 会被拉伸，不能用 frame）
         refresh()
     }
 

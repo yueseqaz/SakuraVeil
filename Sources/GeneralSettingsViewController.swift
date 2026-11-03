@@ -85,6 +85,7 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
         saveButton = save
 
         self.view = view
+        preferredContentSize = Self.pageSize  // 供设置窗口贴合高度（子 view 会被拉伸，不能用 frame）
         refresh()
     }
 

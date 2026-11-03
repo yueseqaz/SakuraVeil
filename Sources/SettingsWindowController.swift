@@ -35,6 +35,8 @@ final class SettingsTabViewController: NSTabViewController {
     }
 
     /// 切换标签页时，窗口高度贴合当前页内容（顶边不动，动画过渡）。
+    /// 注意：子 view 会被 NSTabView 拉伸到容器大小，不能读 frame，
+    /// 必须用每个页面声明的 preferredContentSize。
     override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
         super.tabView(tabView, didSelect: tabViewItem)
         DispatchQueue.main.async { [weak self] in
@@ -42,17 +44,23 @@ final class SettingsTabViewController: NSTabViewController {
         }
     }
 
-    private func fitWindowToContent(of tabViewItem: NSTabViewItem?) {
+    func fitWindowToContent(of tabViewItem: NSTabViewItem?) {
         guard let window = view.window,
               let vc = tabViewItem?.viewController else { return }
-        let contentSize = vc.view.frame.size
+        let contentSize = vc.preferredContentSize
         guard contentSize.width > 0, contentSize.height > 0 else { return }
         let target = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
         var frame = window.frame
-        guard abs(frame.height - target.height) > 0.5 else { return }
+        guard abs(frame.height - target.height) > 0.5 || abs(frame.width - target.width) > 0.5 else { return }
+        let oldTop = frame.maxY
         frame.size = target.size
-        frame.origin.y += (window.frame.height - target.height)  // 保持顶边不动
+        frame.origin.y = oldTop - frame.height  // 保持顶边不动
         window.setFrame(frame, display: true, animate: true)
+    }
+
+    /// 窗口初次打开时也贴合当前页（didSelect 只在切换时触发）。
+    func syncWindowSize() {
+        fitWindowToContent(of: tabView.selectedTabViewItem)
     }
 }
 
@@ -72,5 +80,10 @@ final class SettingsWindowController: NSWindowController {
 
     required init?(coder: NSCoder) {
         fatalError("不支持从归档初始化")
+    }
+
+    /// 转发给标签页控制器：窗口初次打开时贴合当前页高度。
+    func syncWindowSize() {
+        (window?.contentViewController as? SettingsTabViewController)?.syncWindowSize()
     }
 }
