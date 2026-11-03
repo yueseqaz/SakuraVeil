@@ -14,6 +14,13 @@ struct KeyCombo: Codable, Equatable {
         modifiers: UInt32(controlKey) | UInt32(optionKey) | UInt32(cmdKey),
         display: "⌃⌥⌘S"
     )
+
+    /// 保持唤醒开关的默认快捷键：⌃⌥⌘W
+    static let defaultStayAwakeCombo = KeyCombo(
+        keyCode: UInt32(kVK_ANSI_W),
+        modifiers: UInt32(controlKey) | UInt32(optionKey) | UInt32(cmdKey),
+        display: "⌃⌥⌘W"
+    )
 }
 
 /// NSEvent → KeyCombo 的转换工具（录制用）。

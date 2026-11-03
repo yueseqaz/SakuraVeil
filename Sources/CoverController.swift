@@ -34,6 +34,10 @@ final class CoverController {
         windows.first?.makeKeyAndOrderFront(nil)
 
         installObservers()
+        // 遮屏联动：防系统睡眠（任务不断线）与保持亮屏是两条独立断言
+        if Settings.shared.coverPreventSystemSleep {
+            StayAwakeEngine.shared.setTrigger(.cover, active: true)
+        }
         if Settings.shared.keepAwakeWhileCovered {
             KeepAwake.begin()
         }
@@ -48,6 +52,7 @@ final class CoverController {
         guard isCovered else { return }
         isCovered = false
         removeObservers()
+        StayAwakeEngine.shared.setTrigger(.cover, active: false)
         KeepAwake.end()
         if let activityToken {
             ProcessInfo.processInfo.endActivity(activityToken)

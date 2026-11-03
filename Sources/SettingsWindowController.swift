@@ -4,6 +4,7 @@ import Cocoa
 final class SettingsTabViewController: NSTabViewController {
 
     private let generalVC = GeneralSettingsViewController()
+    private let stayAwakeVC = StayAwakeSettingsViewController()
     private let securityVC = SecuritySettingsViewController()
     private let aboutVC = AboutViewController()
 
@@ -11,6 +12,7 @@ final class SettingsTabViewController: NSTabViewController {
         super.init(nibName: nil, bundle: nil)
         tabStyle = .toolbar
         addTab(generalVC, label: I18N.t("通用", "General"), symbol: "gearshape")
+        addTab(stayAwakeVC, label: I18N.t("保持唤醒", "Stay Awake"), symbol: "bolt")
         addTab(securityVC, label: I18N.t("安全", "Security"), symbol: "lock")
         addTab(aboutVC, label: I18N.t("关于", "About"), symbol: "info.circle")
     }

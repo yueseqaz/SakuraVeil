@@ -27,6 +27,9 @@
 ### ✨ 功能
 
 - **一键遮屏**：默认 `⌃⌥⌘S`，遮屏 / 解除 toggle；设置里可录制自定义组合
+- **保持唤醒（Amphetamine 式）**：手动会话（30 分钟～无限期，菜单栏倒计时），到点动作可选睡眠 / 仅熄屏 / 通知；独立热键 `⌃⌥⌘W`
+- **保持唤醒触发器**：指定 App 运行时 / 每日时间段 / 接通电源 / 外接显示器 → 自动防睡；「接通电源 + 外接屏 + 防系统睡眠」即合盖运行
+- **遮屏联动**：遮屏时自动防止系统睡眠（任务不断线），可选保持亮屏
 - **四种内容**：内置极光动画（纯 Core Animation，零素材）/ 自选视频（循环、静音）/ 自选图片 / 当前桌面壁纸
 - **轮播文案**：底部胶囊每 8 秒轮换一句，支持自定义；顶部显示时钟与已遮屏时长
 - **密码解锁**：遮屏时按任意键唤出；密码只存 Keychain，连错 5 次锁定密码输入 30 秒（快捷键不受影响）
@@ -126,6 +129,9 @@ behind the curtain. Only your global hotkey or password can lift it.
 ### ✨ Features
 
 - **One-key cover**: default `⌃⌥⌘S` toggles on/off; record a custom combo in Settings
+- **Stay Awake (Amphetamine-style)**: manual sessions (30 min–unlimited, countdown in the menu), end-of-session action (sleep / display sleep / notify); dedicated hotkey `⌃⌥⌘W`
+- **Stay-awake triggers**: while chosen apps run / daily time range / on AC power / external display connected → auto no-sleep; "AC power + external display + no sleep" gives clamshell mode
+- **Cover link**: covering the screen automatically prevents system sleep so tasks keep running; optional keep-display-awake
 - **Four content modes**: built-in aurora animation (pure Core Animation, zero assets) / custom video (looped, muted) / custom image / current desktop wallpaper
 - **Rotating messages**: a capsule at the bottom swaps lines every 8 s (editable); clock + covered duration on top
 - **Password unlock**: press any key while covered; the password lives only in your Keychain; 5 wrong attempts lock input for 30 s (hotkey unaffected)
