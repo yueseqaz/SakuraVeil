@@ -37,6 +37,9 @@
 
 ### 🔧 构建
 
+> 不想编译？直接从 [Releases](https://github.com/yueseqaz/SakuraVeil/releases/latest) 下载双架构 DMG / ZIP
+> （push tag 后由 GitHub Actions 自动编译发布）。
+
 ```bash
 ./build.sh                        # 编译 arm64 并打包 SakuraVeil.app
 MAKE_DMG=1 ./build.sh             # 额外生成 DMG
@@ -132,6 +135,9 @@ behind the curtain. Only your global hotkey or password can lift it.
 - **Quality of life**: re-covers after display sleep / monitor hot-plug / resolution changes; optional keep-display-awake; launch at login; fully localized (中文 / English)
 
 ### 🔧 Build
+
+> Don't want to compile? Grab the universal DMG / ZIP from [Releases](https://github.com/yueseqaz/SakuraVeil/releases/latest)
+> (built and published automatically by GitHub Actions on tag push).
 
 ```bash
 ./build.sh                        # compile arm64 and bundle SakuraVeil.app
