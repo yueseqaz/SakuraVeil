@@ -40,7 +40,6 @@ final class CoverContentController {
 
     func install() {
         installBackground()
-        installScrims()
         installClock()
         installMessageCapsule()
         startTimers()
@@ -88,30 +87,6 @@ final class CoverContentController {
             let url = NSWorkspace.shared.desktopImageURL(for: screen)
             if !installImage(url: url) { installAurora() }
         }
-    }
-
-    /// 顶部/底部渐暗压边：保证时钟与文案在亮色壁纸/视频上也可读。
-    private func installScrims() {
-        let b = container.bounds
-        installScrim(frame: NSRect(x: 0, y: b.height - 300, width: b.width, height: 300),
-                     from: NSColor.black.withAlphaComponent(0.45),
-                     to: NSColor.black.withAlphaComponent(0))
-        installScrim(frame: NSRect(x: 0, y: 0, width: b.width, height: 200),
-                     from: NSColor.black.withAlphaComponent(0),
-                     to: NSColor.black.withAlphaComponent(0.45))
-    }
-
-    private func installScrim(frame: NSRect, from: NSColor, to: NSColor) {
-        let view = NSView(frame: frame)
-        container.addSubview(view)
-        view.wantsLayer = true
-        let gradient = CAGradientLayer()
-        gradient.frame = view.bounds
-        gradient.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
-        gradient.colors = [from.cgColor, to.cgColor]
-        gradient.startPoint = CGPoint(x: 0.5, y: 0)
-        gradient.endPoint = CGPoint(x: 0.5, y: 1)
-        view.layer?.addSublayer(gradient)
     }
 
     private func installAurora() {
@@ -198,20 +173,16 @@ final class CoverContentController {
 
     private func installClock() {
         let time = NSTextField(labelWithString: "")
-        time.font = NSFont.monospacedDigitSystemFont(ofSize: 46, weight: .light)
-        time.textColor = NSColor.white.withAlphaComponent(0.92)
         time.alignment = .center
 
         let info = NSTextField(labelWithString: "")
-        info.font = .systemFont(ofSize: 15, weight: .regular)
-        info.textColor = NSColor.white.withAlphaComponent(0.62)
         info.alignment = .center
 
-        // 白字加阴影，任何背景都可读
+        // 描边之外再叠一层柔和阴影
         let shadow = NSShadow()
-        shadow.shadowColor = NSColor.black.withAlphaComponent(0.65)
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.8)
         shadow.shadowOffset = NSSize(width: 0, height: -1)
-        shadow.shadowBlurRadius = 5
+        shadow.shadowBlurRadius = 10
         time.shadow = shadow
         info.shadow = shadow
 
@@ -225,14 +196,30 @@ final class CoverContentController {
         info.frame = NSRect(x: b.midX - 260, y: b.height - 76, width: 520, height: 22)
     }
 
+    /// 字幕式文字：白字 + 浓黑外描边（YouTube 字幕级别），亮壁纸/视频上也清晰，无需整片压边。
+    private static func subtitleString(_ text: String, fontSize: CGFloat, alpha: CGFloat,
+                                       strokeDivider: CGFloat = 8) -> NSAttributedString {
+        NSAttributedString(string: text, attributes: [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: fontSize > 20 ? .light : .regular),
+            .foregroundColor: NSColor.white.withAlphaComponent(alpha),
+            .strokeColor: NSColor.black.withAlphaComponent(0.8),
+            .strokeWidth: -fontSize / strokeDivider,  // 负值 = 外描边
+        ])
+    }
+
     private func updateClock() {
         let now = Date()
-        timeLabel?.stringValue = timeFormatter.string(from: now)
+        timeLabel?.attributedStringValue = Self.subtitleString(
+            timeFormatter.string(from: now), fontSize: 46, alpha: 0.95
+        )
         let minutes = max(0, Int(now.timeIntervalSince(startedAt) / 60))
         let durationText = minutes >= 1
             ? I18N.t("已遮屏 \(minutes) 分钟", "covered \(minutes) min")
             : I18N.t("刚刚开始", "just started")
-        infoLabel?.stringValue = infoFormatter.string(from: now) + " · " + durationText
+        infoLabel?.attributedStringValue = Self.subtitleString(
+            infoFormatter.string(from: now) + " · " + durationText,
+            fontSize: 15, alpha: 0.92, strokeDivider: 5.5  // 小字用更粗的描边才扛得住亮背景
+        )
     }
 
     // MARK: - 底部轮播文案

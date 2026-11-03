@@ -4,11 +4,11 @@
 #   ./build.sh              # 编译 arm64 并打包 SakuraVeil.app
 #   MAKE_DMG=1 ./build.sh   # 额外生成 DMG
 #   ARCHS="arm64 x86_64" ./build.sh   # 双架构（自动 lipo 合并）
-set -e
+set -eo pipefail
 
 APP_NAME="SakuraVeil"
-APP_VERSION="1.0.0"
-APP_BUILD="100"
+APP_VERSION="1.0.1"
+APP_BUILD="101"
 BUILD_DIR="build"
 APP_BUNDLE="$APP_NAME.app"
 ICONSET_DIR="$BUILD_DIR/AppIcon.iconset"

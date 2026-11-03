@@ -46,7 +46,7 @@ final class AboutViewController: NSViewController {
         view.addSubview(intro)
 
         // GitHub 链接
-        let link = NSButton(target: self, action: #selector(openRepo))
+        let link = NSButton(title: "github.com/yueseqaz/SakuraVeil", target: self, action: #selector(openRepo))
         link.isBordered = false
         link.frame = NSRect(x: 24, y: 26, width: 452, height: 18)
         link.attributedTitle = NSAttributedString(
