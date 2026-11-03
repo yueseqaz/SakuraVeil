@@ -191,9 +191,11 @@ final class CoverContentController {
         timeLabel = time
         infoLabel = info
 
+        // 时钟组整体往下放：顶部留白约为屏高的 13%，视觉更居中
         let b = container.bounds
-        time.frame = NSRect(x: b.midX - 260, y: b.height - 138, width: 520, height: 58)
-        info.frame = NSRect(x: b.midX - 260, y: b.height - 76, width: 520, height: 22)
+        let topPad = max(96, b.height * 0.13)
+        time.frame = NSRect(x: b.midX - 260, y: b.height - topPad - 58, width: 520, height: 58)
+        info.frame = NSRect(x: b.midX - 260, y: b.height - topPad - 58 - 16 - 22, width: 520, height: 22)
     }
 
     /// 字幕式文字：白字 + 浓黑外描边（YouTube 字幕级别），亮壁纸/视频上也清晰，无需整片压边。
