@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusMenu: NSMenu?
     private var settingsWindowController: SettingsWindowController?
     private var rightClickMonitor: Any?
+    private var customDurationField: NSTextField?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         HotkeyCenter.shared.onKeyDown = { [weak self] id in
@@ -240,10 +241,23 @@ extension AppDelegate: NSMenuDelegate {
                 item.representedObject = value.map { NSNumber(value: $0) }
                 menu.addItem(item)
             }
-            let custom = NSMenuItem(title: I18N.t("自定义时长…", "Custom duration…"),
-                                    action: #selector(customStayAwakeDuration), keyEquivalent: "")
-            custom.target = self
-            menu.addItem(custom)
+
+            // 自定义时长：直接嵌在菜单里输入（NSMenuItem.view），回车即开始
+            let customRow = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 30))
+            let label = NSTextField(labelWithString: I18N.t("自定义", "Custom"))
+            label.frame = NSRect(x: 12, y: 8, width: 54, height: 15)
+            label.font = .systemFont(ofSize: 12)
+            let field = NSTextField(frame: NSRect(x: 70, y: 4, width: 120, height: 22))
+            field.placeholderString = I18N.t("90 / 1h30m", "90 / 1h30m")
+            field.font = .systemFont(ofSize: 12)
+            field.delegate = self
+            customRow.addSubview(label)
+            customRow.addSubview(field)
+            customDurationField = field
+
+            let customItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+            customItem.view = customRow
+            menu.addItem(customItem)
         }
 
         // 触发器状态（只读）
@@ -292,6 +306,13 @@ extension AppDelegate: NSMenuDelegate {
         menu.addItem(quitItem)
     }
 
+    /// 菜单打开后自动聚焦自定义时长输入框（直接打字，回车即开始）
+    func menuDidOpen(_ menu: NSMenu) {
+        DispatchQueue.main.async { [weak self] in
+            _ = self?.customDurationField?.becomeFirstResponder()
+        }
+    }
+
     @objc private func startStayAwake(_ sender: NSMenuItem) {
         let minutes = (sender.representedObject as? NSNumber)?.intValue
         StayAwakeEngine.shared.startManualSession(minutes: minutes)
@@ -300,27 +321,6 @@ extension AppDelegate: NSMenuDelegate {
 
     @objc private func endStayAwake() {
         StayAwakeEngine.shared.endManualSession()
-    }
-
-    /// 菜单：自定义时长开始会话
-    @objc private func customStayAwakeDuration() {
-        let alert = NSAlert()
-        alert.messageText = I18N.t("自定义保持唤醒时长", "Custom stay-awake duration")
-        alert.informativeText = I18N.t(
-            "单位支持：分钟（如 90）、小时（如 1h）、混合（如 1h30m）",
-            "Accepts: minutes (90), hours (1h), or mixed (1h30m)"
-        )
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 220, height: 24))
-        field.placeholderString = I18N.t("例如：90 或 1h30m", "e.g. 90 or 1h30m")
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        alert.addButton(withTitle: I18N.t("开始", "Start"))
-        alert.addButton(withTitle: I18N.t("取消", "Cancel"))
-        NSApp.activate(ignoringOtherApps: true)
-        guard alert.runModal() == .alertFirstButtonReturn,
-              let minutes = Self.parseMinutes(field.stringValue) else { return }
-        StayAwakeEngine.shared.startManualSession(minutes: minutes)
-        AppNotifier.requestAuthorizationIfNeeded()
     }
 
     /// 解析用户输入的时长：支持 "90"（分钟）、"90m"、"1h"、"1h30m"
@@ -338,5 +338,32 @@ extension AppDelegate: NSMenuDelegate {
             return mins
         }
         return nil
+    }
+}
+
+// MARK: - 菜单内自定义时长输入
+
+extension AppDelegate: NSTextFieldDelegate {
+
+    /// 菜单内输入框按回车 → 解析并开始会话
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard control === customDurationField else { return false }
+        if commandSelector == #selector(NSText.insertNewline(_:)) {
+            submitCustomDuration(control as? NSTextField ?? NSTextField())
+            return true
+        }
+        return false
+    }
+
+    private func submitCustomDuration(_ field: NSTextField) {
+        guard let minutes = AppDelegate.parseMinutes(field.stringValue) else {
+            field.stringValue = ""
+            field.placeholderString = I18N.t("无效，重试：90 / 1h30m", "Invalid — try 90 / 1h30m")
+            return
+        }
+        field.stringValue = ""
+        StayAwakeEngine.shared.startManualSession(minutes: minutes)
+        AppNotifier.requestAuthorizationIfNeeded()
+        statusMenu?.cancelTracking()  // 关闭菜单，状态交给菜单栏图标
     }
 }
