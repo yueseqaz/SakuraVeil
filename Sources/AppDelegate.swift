@@ -1,4 +1,5 @@
 import Cocoa
+import ObjectiveC
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -98,23 +99,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.autoenablesItems = false
         statusMenu = menu
         statusItem = item
-        // 防休眠为主：左键 = 按默认时长开关会话；右键 = 弹菜单
-        item.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
-        item.button?.action = #selector(statusItemClicked(_:))
-        item.button?.target = self
+        // 状态项按钮换成自定义子类：mouseDown / rightMouseDown 由系统区分，杜绝左右键混淆
+        if let button = item.button {
+            object_setClass(button, StatusItemButton.self)
+            button.svLeftClickHandler = { [weak self] in
+                self?.toggleStayAwake()
+            }
+            button.svRightClickHandler = { [weak self] in
+                self?.popUpStatusMenu()
+            }
+        }
     }
 
-    @objc private func statusItemClicked(_ sender: Any?) {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
-            // 临时挂菜单 + 模拟点击（SakuraClipboard 同款技巧），弹出后摘掉
-            guard let item = statusItem, let menu = statusMenu else { return }
-            item.menu = menu
-            item.button?.performClick(nil)
-            item.menu = nil
-        } else {
-            toggleStayAwake()
-        }
+    /// 右键弹出菜单（贴着状态项按钮下缘），关闭后摘掉引用
+    private func popUpStatusMenu() {
+        guard let item = statusItem, let menu = statusMenu, let button = item.button else { return }
+        menu.popUp(positioning: nil,
+                   at: NSPoint(x: 0, y: button.bounds.maxY + 5),
+                   in: button)
     }
 
     // MARK: - 动作
@@ -148,6 +150,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.syncWindowSize()
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
+    }
+}
+
+// MARK: - 自定义状态项按钮（左键 = 防休眠开关，右键 = 菜单）
+//
+// object_setClass 换类时子类不能有存储属性（实例按父类布局分配，越界写会崩），
+// 所以闭包用 associated objects 挂载。
+
+final class StatusItemButton: NSStatusBarButton {
+    override func mouseDown(with event: NSEvent) {
+        DispatchQueue.main.async { [weak self] in
+            self?.svLeftClickHandler?()
+        }
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        DispatchQueue.main.async { [weak self] in
+            self?.svRightClickHandler?()
+        }
+    }
+}
+
+private var svLeftKey: UInt8 = 0
+private var svRightKey: UInt8 = 0
+
+extension NSStatusBarButton {
+    var svLeftClickHandler: (() -> Void)? {
+        get { objc_getAssociatedObject(self, &svLeftKey) as? (() -> Void) }
+        set { objc_setAssociatedObject(self, &svLeftKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+
+    var svRightClickHandler: (() -> Void)? {
+        get { objc_getAssociatedObject(self, &svRightKey) as? (() -> Void) }
+        set { objc_setAssociatedObject(self, &svRightKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
 }
 
