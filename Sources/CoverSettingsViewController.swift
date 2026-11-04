@@ -115,20 +115,22 @@ final class CoverSettingsViewController: NSViewController {
         case .video:
             if let url = Settings.shared.videoURL, FileManager.default.fileExists(atPath: url.path) {
                 Settings.shared.contentMode = .video
-            } else if let url = pickFile(allowed: [.movie, .video],
-                                         message: I18N.t("选择遮屏时循环播放的视频", "Pick a video to loop while covered")) {
-                Settings.shared.videoURL = url
+            } else if let picked = pickFile(allowed: [.movie, .video],
+                                            message: I18N.t("选择遮屏时循环播放的视频", "Pick a video to loop while covered")),
+                      let persisted = Self.persistMedia(from: picked, kind: "video") {
+                Settings.shared.videoURL = persisted
                 Settings.shared.contentMode = .video
             } else {
-                refreshModeButtons()  // 用户取消 → 回退到原模式
+                refreshModeButtons()  // 用户取消 / 拷贝失败 → 回退到原模式
                 return
             }
         case .image:
             if let url = Settings.shared.imageURL, NSImage(contentsOf: url) != nil {
                 Settings.shared.contentMode = .image
-            } else if let url = pickFile(allowed: [.image],
-                                         message: I18N.t("选择遮屏壁纸图片", "Pick an image for the cover")) {
-                Settings.shared.imageURL = url
+            } else if let picked = pickFile(allowed: [.image],
+                                            message: I18N.t("选择遮屏壁纸图片", "Pick an image for the cover")),
+                      let persisted = Self.persistMedia(from: picked, kind: "image") {
+                Settings.shared.imageURL = persisted
                 Settings.shared.contentMode = .image
             } else {
                 refreshModeButtons()
@@ -150,6 +152,30 @@ final class CoverSettingsViewController: NSViewController {
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK else { return nil }
         return panel.url
+    }
+
+    /// 把用户选的媒体拷进 Application Support：之后播放/壁纸只读自己的目录，
+    /// 不再反复触发「下载文件夹」的 TCC 授权（重建后也不会重弹）。
+    private static func persistMedia(from source: URL, kind: String) -> URL? {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("SakuraVeil/media", isDirectory: true)
+        do {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        } catch {
+            Log.app.error("媒体目录创建失败：\(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+        let ext = source.pathExtension.isEmpty ? (kind == "video" ? "mp4" : "png") : source.pathExtension
+        let dest = dir.appendingPathComponent("\(kind).\(ext)")
+        try? FileManager.default.removeItem(at: dest)  // 覆盖旧的
+        do {
+            try FileManager.default.copyItem(at: source, to: dest)
+            Log.app.info("媒体已入库：\(dest.lastPathComponent, privacy: .public)")
+            return dest
+        } catch {
+            Log.app.error("媒体拷贝失败：\(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     @objc private func toggleCoverSleep(_ sender: NSButton) {
