@@ -26,10 +26,10 @@
 
 ### ✨ 功能
 
-- **一键遮屏**：默认 `⌃⌥⌘S`，遮屏 / 解除 toggle；设置里可录制自定义组合
-- **保持唤醒（Amphetamine 式）**：手动会话（30 分钟～无限期，菜单栏倒计时），到点动作可选睡眠 / 仅熄屏 / 通知；独立热键 `⌃⌥⌘W`
+- **防休眠为主**：菜单栏图标即状态 —— 未开启显示 moon.zzz（会睡），开启后变 ⚡（不睡）；手动会话剩余时间直接显示在菜单栏（⚡ 59:12，可关）
+- **保持唤醒会话**：默认时长可配置，到点动作可选睡眠 / 仅熄屏 / 通知；独立热键 `⌃⌥⌘W`
 - **保持唤醒触发器**：指定 App 运行时 / 每日时间段 / 接通电源 / 外接显示器 → 自动防睡；「接通电源 + 外接屏 + 防系统睡眠」即合盖运行
-- **遮屏联动**：遮屏时自动防止系统睡眠（任务不断线），可选保持亮屏
+- **遮屏（可选）**：隐私幕布是可选项 —— 菜单「立即遮屏」或热键 `⌃⌥⌘S` 手动触发，也可设置成遮屏时自动防睡
 - **四种内容**：内置极光动画（纯 Core Animation，零素材）/ 自选视频（循环、静音）/ 自选图片 / 当前桌面壁纸
 - **轮播文案**：底部胶囊每 8 秒轮换一句，支持自定义；顶部显示时钟与已遮屏时长
 - **密码解锁**：遮屏时按任意键唤出；密码只存 Keychain，连错 5 次锁定密码输入 30 秒（快捷键不受影响）
@@ -128,10 +128,10 @@ behind the curtain. Only your global hotkey or password can lift it.
 
 ### ✨ Features
 
-- **One-key cover**: default `⌃⌥⌘S` toggles on/off; record a custom combo in Settings
-- **Stay Awake (Amphetamine-style)**: manual sessions (30 min–unlimited, countdown in the menu), end-of-session action (sleep / display sleep / notify); dedicated hotkey `⌃⌥⌘W`
+- **Stay awake first**: the menu bar icon IS the status — moon.zzz when sleeping is allowed, ⚡ while staying awake; remaining time shown right in the menu bar (⚡ 59:12, optional)
+- **Stay-awake sessions**: configurable default duration, end-of-session action (sleep / display sleep / notify); dedicated hotkey `⌃⌥⌘W`
 - **Stay-awake triggers**: while chosen apps run / daily time range / on AC power / external display connected → auto no-sleep; "AC power + external display + no sleep" gives clamshell mode
-- **Cover link**: covering the screen automatically prevents system sleep so tasks keep running; optional keep-display-awake
+- **Cover (optional)**: the privacy curtain is an opt-in feature — trigger via "Cover Now" or `⌃⌥⌘S`; can also auto-prevent sleep while covered
 - **Four content modes**: built-in aurora animation (pure Core Animation, zero assets) / custom video (looped, muted) / custom image / current desktop wallpaper
 - **Rotating messages**: a capsule at the bottom swaps lines every 8 s (editable); clock + covered duration on top
 - **Password unlock**: press any key while covered; the password lives only in your Keychain; 5 wrong attempts lock input for 30 s (hotkey unaffected)

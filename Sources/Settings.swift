@@ -46,6 +46,7 @@ final class Settings {
         static let customMessages = "sakuraveil.customMessages"
         static let keepAwake = "sakuraveil.keepAwake"
         static let hotkey = "sakuraveil.hotkey"
+        static let menuBarCountdown = "sakuraveil.menuBarCountdown"
         // 保持唤醒
         static let stayAwakeDefaultMinutes = "sakuraveil.stayAwake.defaultMinutes"
         static let stayAwakeEndAction = "sakuraveil.stayAwake.endAction"
@@ -71,6 +72,7 @@ final class Settings {
             Key.stayAwakeEndAction: StayAwakeEndAction.none.rawValue,
             Key.stayAwakeNotify: true,
             Key.coverPreventSystemSleep: true,
+            Key.menuBarCountdown: true,
             Key.triggerAppsEnabled: false,
             Key.triggerScheduleEnabled: false,
             Key.triggerScheduleStart: 22 * 60,
@@ -150,6 +152,12 @@ final class Settings {
     var stayAwakeNotify: Bool {
         get { defaults.bool(forKey: Key.stayAwakeNotify) }
         set { defaults.set(newValue, forKey: Key.stayAwakeNotify) }
+    }
+
+    /// 菜单栏显示剩余时间（⚡ 59:12）
+    var menuBarCountdown: Bool {
+        get { defaults.bool(forKey: Key.menuBarCountdown) }
+        set { defaults.set(newValue, forKey: Key.menuBarCountdown) }
     }
 
     /// 保持唤醒开关的独立热键

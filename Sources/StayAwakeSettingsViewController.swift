@@ -1,15 +1,14 @@
 import Cocoa
-import UniformTypeIdentifiers
 
-/// 保持唤醒设置页：遮屏联动、手动会话、三类触发器、热键。
+/// 保持唤醒设置页：手动会话、菜单栏倒计时、热键、触发器、开机自启。
 final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSource, NSTableViewDelegate {
 
-    private var coverSleepCheck: NSButton!
-    private var coverDisplayCheck: NSButton!
     private var defaultDurationPopup: NSPopUpButton!
     private var endActionPopup: NSPopUpButton!
     private var notifyCheck: NSButton!
+    private var countdownCheck: NSButton!
     private var hotkeyLabel: NSTextField!
+    private var launchCheck: NSButton!
 
     private var appsCheck: NSButton!
     private var appsTable: NSTableView!
@@ -21,7 +20,7 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
     private var displayCheck: NSButton!
 
     /// 页面固定尺寸（设置窗口按此自适应高度）
-    static let pageSize = NSSize(width: 500, height: 570)
+    static let pageSize = NSSize(width: 500, height: 510)
 
     private static let durationOptions: [(Int?, String)] = [
         (30, I18N.t("30 分钟", "30 minutes")),
@@ -34,29 +33,13 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
     override func loadView() {
         let view = NSView(frame: NSRect(origin: .zero, size: Self.pageSize))
 
-        // MARK: 遮屏联动
-        addLabel(I18N.t("遮屏联动", "Cover link"), to: view,
-                 frame: NSRect(x: 24, y: 528, width: 200, height: 18), bold: true)
-
-        coverSleepCheck = NSButton(checkboxWithTitle: I18N.t("遮屏时防止系统睡眠（任务不断线）", "Prevent system sleep while covered (keep tasks running)"),
-                                   target: self, action: #selector(toggleCoverSleep(_:)))
-        coverSleepCheck.frame = NSRect(x: 24, y: 500, width: 452, height: 20)
-        view.addSubview(coverSleepCheck)
-
-        coverDisplayCheck = NSButton(checkboxWithTitle: I18N.t("遮屏期间保持亮屏", "Keep display awake while covered"),
-                                     target: self, action: #selector(toggleCoverDisplay(_:)))
-        coverDisplayCheck.frame = NSRect(x: 24, y: 474, width: 452, height: 20)
-        view.addSubview(coverDisplayCheck)
-
-        addSeparator(to: view, y: 458)
-
         // MARK: 手动会话
         addLabel(I18N.t("手动会话", "Manual session"), to: view,
-                 frame: NSRect(x: 24, y: 430, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 472, width: 200, height: 18), bold: true)
 
         addLabel(I18N.t("默认时长", "Default duration"), to: view,
-                 frame: NSRect(x: 24, y: 398, width: 90, height: 18))
-        defaultDurationPopup = NSPopUpButton(frame: NSRect(x: 120, y: 392, width: 150, height: 26))
+                 frame: NSRect(x: 24, y: 440, width: 90, height: 18))
+        defaultDurationPopup = NSPopUpButton(frame: NSRect(x: 120, y: 434, width: 150, height: 26))
         for (_, title) in Self.durationOptions {
             defaultDurationPopup.addItem(withTitle: title)
         }
@@ -65,8 +48,8 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
         view.addSubview(defaultDurationPopup)
 
         addLabel(I18N.t("到点动作", "When it ends"), to: view,
-                 frame: NSRect(x: 24, y: 364, width: 90, height: 18))
-        endActionPopup = NSPopUpButton(frame: NSRect(x: 120, y: 358, width: 150, height: 26))
+                 frame: NSRect(x: 24, y: 406, width: 90, height: 18))
+        endActionPopup = NSPopUpButton(frame: NSRect(x: 120, y: 400, width: 150, height: 26))
         for action in [StayAwakeEndAction.none, .sleep, .displaySleep] {
             endActionPopup.addItem(withTitle: action.displayName)
             endActionPopup.lastItem?.representedObject = action.rawValue
@@ -77,33 +60,43 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
 
         notifyCheck = NSButton(checkboxWithTitle: I18N.t("会话结束时发送系统通知", "Send a notification when the session ends"),
                                target: self, action: #selector(toggleNotify(_:)))
-        notifyCheck.frame = NSRect(x: 24, y: 330, width: 452, height: 20)
+        notifyCheck.frame = NSRect(x: 24, y: 374, width: 452, height: 20)
         view.addSubview(notifyCheck)
 
+        countdownCheck = NSButton(checkboxWithTitle: I18N.t("菜单栏显示剩余时间（⚡ 59:12）", "Show remaining time in the menu bar (⚡ 59:12)"),
+                                  target: self, action: #selector(toggleCountdown(_:)))
+        countdownCheck.frame = NSRect(x: 24, y: 350, width: 452, height: 20)
+        view.addSubview(countdownCheck)
+
         addLabel(I18N.t("开关热键", "Toggle hotkey"), to: view,
-                 frame: NSRect(x: 24, y: 298, width: 90, height: 18))
+                 frame: NSRect(x: 24, y: 318, width: 90, height: 18))
         hotkeyLabel = NSTextField(labelWithString: "")
-        hotkeyLabel.frame = NSRect(x: 120, y: 296, width: 140, height: 22)
+        hotkeyLabel.frame = NSRect(x: 120, y: 316, width: 140, height: 22)
         hotkeyLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .medium)
         view.addSubview(hotkeyLabel)
 
         let changeHotkey = NSButton(title: I18N.t("修改…", "Change…"), target: self, action: #selector(changeHotkey))
         changeHotkey.bezelStyle = .rounded
-        changeHotkey.frame = NSRect(x: 268, y: 292, width: 80, height: 26)
+        changeHotkey.frame = NSRect(x: 268, y: 312, width: 80, height: 26)
         view.addSubview(changeHotkey)
 
-        addSeparator(to: view, y: 276)
+        launchCheck = NSButton(checkboxWithTitle: I18N.t("开机自启", "Launch at login"),
+                               target: self, action: #selector(toggleLaunchAtLogin(_:)))
+        launchCheck.frame = NSRect(x: 24, y: 286, width: 452, height: 20)
+        view.addSubview(launchCheck)
+
+        addSeparator(to: view, y: 270)
 
         // MARK: 触发器
         addLabel(I18N.t("触发器", "Triggers"), to: view,
-                 frame: NSRect(x: 24, y: 248, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 242, width: 200, height: 18), bold: true)
 
         appsCheck = NSButton(checkboxWithTitle: I18N.t("App 触发器：以下应用运行时保持唤醒", "App trigger: stay awake while these apps run"),
                              target: self, action: #selector(toggleAppsTrigger(_:)))
-        appsCheck.frame = NSRect(x: 24, y: 220, width: 452, height: 20)
+        appsCheck.frame = NSRect(x: 24, y: 214, width: 452, height: 20)
         view.addSubview(appsCheck)
 
-        let scroll = NSScrollView(frame: NSRect(x: 24, y: 126, width: 330, height: 88))
+        let scroll = NSScrollView(frame: NSRect(x: 24, y: 120, width: 330, height: 88))
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
         let table = NSTableView(frame: .zero)
@@ -121,43 +114,43 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
 
         let addAppButton = NSButton(title: I18N.t("添加 App…", "Add App…"), target: self, action: #selector(addApp))
         addAppButton.bezelStyle = .rounded
-        addAppButton.frame = NSRect(x: 366, y: 152, width: 110, height: 26)
+        addAppButton.frame = NSRect(x: 366, y: 146, width: 110, height: 26)
         view.addSubview(addAppButton)
 
         removeAppButton = NSButton(title: I18N.t("移除", "Remove"), target: self, action: #selector(removeSelectedApp))
         removeAppButton.bezelStyle = .rounded
-        removeAppButton.frame = NSRect(x: 366, y: 120, width: 110, height: 26)
+        removeAppButton.frame = NSRect(x: 366, y: 114, width: 110, height: 26)
         removeAppButton.isEnabled = false
         view.addSubview(removeAppButton)
 
         scheduleCheck = NSButton(checkboxWithTitle: I18N.t("日程触发器：每天此时间段保持唤醒", "Schedule trigger: stay awake daily during"),
                                  target: self, action: #selector(toggleScheduleTrigger(_:)))
-        scheduleCheck.frame = NSRect(x: 24, y: 96, width: 452, height: 20)
+        scheduleCheck.frame = NSRect(x: 24, y: 90, width: 452, height: 20)
         view.addSubview(scheduleCheck)
 
-        scheduleStartPicker = makeTimePicker(frame: NSRect(x: 24, y: 62, width: 70, height: 24),
+        scheduleStartPicker = makeTimePicker(frame: NSRect(x: 24, y: 56, width: 70, height: 24),
                                              onChange: #selector(scheduleTimeChanged(_:)))
-        scheduleEndPicker = makeTimePicker(frame: NSRect(x: 132, y: 62, width: 70, height: 24),
+        scheduleEndPicker = makeTimePicker(frame: NSRect(x: 132, y: 56, width: 70, height: 24),
                                            onChange: #selector(scheduleTimeChanged(_:)))
         view.addSubview(scheduleStartPicker)
         view.addSubview(scheduleEndPicker)
         addLabel(I18N.t("开始", "from"), to: view,
-                 frame: NSRect(x: 98, y: 65, width: 30, height: 18), small: true)
+                 frame: NSRect(x: 98, y: 59, width: 30, height: 18), small: true)
         addLabel(I18N.t("到", "to"), to: view,
-                 frame: NSRect(x: 208, y: 65, width: 20, height: 18), small: true)
+                 frame: NSRect(x: 208, y: 59, width: 20, height: 18), small: true)
 
         powerCheck = NSButton(checkboxWithTitle: I18N.t("接通电源时", "On AC power"),
                               target: self, action: #selector(togglePowerTrigger(_:)))
-        powerCheck.frame = NSRect(x: 244, y: 62, width: 120, height: 20)
+        powerCheck.frame = NSRect(x: 244, y: 56, width: 120, height: 20)
         view.addSubview(powerCheck)
 
         displayCheck = NSButton(checkboxWithTitle: I18N.t("外接显示器接入时保持唤醒", "Stay awake when an external display is connected"),
                                 target: self, action: #selector(toggleDisplayTrigger(_:)))
-        displayCheck.frame = NSRect(x: 24, y: 34, width: 452, height: 20)
+        displayCheck.frame = NSRect(x: 24, y: 26, width: 452, height: 20)
         view.addSubview(displayCheck)
 
         addLabel(I18N.t("合盖运行 = 接通电源 + 外接显示器 + 防系统睡眠同时满足；注意散热。", "Clamshell = AC power + external display + no system sleep. Mind the heat."),
-                 to: view, frame: NSRect(x: 24, y: 12, width: 460, height: 14), small: true)
+                 to: view, frame: NSRect(x: 24, y: 8, width: 460, height: 14), small: true)
 
         self.view = view
         preferredContentSize = Self.pageSize
@@ -178,16 +171,15 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
     // MARK: - 状态刷新
 
     private func refresh() {
-        coverSleepCheck.state = Settings.shared.coverPreventSystemSleep ? .on : .off
-        coverDisplayCheck.state = Settings.shared.keepAwakeWhileCovered ? .on : .off
-
         if let index = Self.durationOptions.firstIndex(where: { $0.0 == Settings.shared.stayAwakeDefaultMinutes }) {
             defaultDurationPopup.selectItem(at: index)
         }
         endActionPopup.selectItem(at: [StayAwakeEndAction.none, .sleep, .displaySleep]
             .firstIndex(of: Settings.shared.stayAwakeEndAction) ?? 0)
         notifyCheck.state = Settings.shared.stayAwakeNotify ? .on : .off
+        countdownCheck.state = Settings.shared.menuBarCountdown ? .on : .off
         hotkeyLabel.stringValue = Settings.shared.stayAwakeHotkeyCombo.display
+        launchCheck.state = LaunchAtLogin.isEnabled ? .on : .off
 
         appsCheck.state = Settings.shared.triggerAppsEnabled ? .on : .off
         appsTable.reloadData()
@@ -210,24 +202,6 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
 
     // MARK: - 动作
 
-    @objc private func toggleCoverSleep(_ sender: NSButton) {
-        Settings.shared.coverPreventSystemSleep = sender.state == .on
-        if CoverController.shared.isCovered {
-            StayAwakeEngine.shared.setTrigger(.cover, active: sender.state == .on)
-        }
-    }
-
-    @objc private func toggleCoverDisplay(_ sender: NSButton) {
-        Settings.shared.keepAwakeWhileCovered = sender.state == .on
-        if CoverController.shared.isCovered {
-            if Settings.shared.keepAwakeWhileCovered {
-                KeepAwake.begin()
-            } else {
-                KeepAwake.end()
-            }
-        }
-    }
-
     @objc private func defaultDurationChanged(_ sender: NSPopUpButton) {
         let index = sender.indexOfSelectedItem
         Settings.shared.stayAwakeDefaultMinutes = Self.durationOptions[index].0 ?? 60
@@ -245,6 +219,16 @@ final class StayAwakeSettingsViewController: NSViewController, NSTableViewDataSo
         if sender.state == .on {
             AppNotifier.requestAuthorizationIfNeeded()
         }
+    }
+
+    @objc private func toggleCountdown(_ sender: NSButton) {
+        Settings.shared.menuBarCountdown = sender.state == .on
+        NotificationCenter.default.post(name: NSNotification.Name("SakuraVeil.StatusItemChanged"), object: nil)
+    }
+
+    @objc private func toggleLaunchAtLogin(_ sender: NSButton) {
+        LaunchAtLogin.setEnabled(sender.state == .on)
+        sender.state = LaunchAtLogin.isEnabled ? .on : .off
     }
 
     @objc private func changeHotkey() {

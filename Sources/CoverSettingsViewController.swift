@@ -1,12 +1,12 @@
 import Cocoa
 import UniformTypeIdentifiers
 
-/// 通用设置页：遮屏内容模式、保持亮屏、开机自启、自定义轮播文案。
-final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate {
+/// 遮屏设置页：内容模式、遮屏联动、自定义轮播文案。
+final class CoverSettingsViewController: NSViewController {
 
     private var modeButtons: [NSButton] = []
-    private var keepAwakeCheck: NSButton!
-    private var launchCheck: NSButton!
+    private var coverSleepCheck: NSButton!
+    private var coverDisplayCheck: NSButton!
     private var messagesTextView: NSTextView!
     private var saveButton: NSButton!
 
@@ -16,9 +16,25 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
     override func loadView() {
         let view = NSView(frame: NSRect(origin: .zero, size: Self.pageSize))
 
+        // MARK: 遮屏联动
+        addLabel(I18N.t("遮屏联动", "Cover link"), to: view,
+                 frame: NSRect(x: 24, y: 392, width: 200, height: 18), bold: true)
+
+        coverSleepCheck = NSButton(checkboxWithTitle: I18N.t("遮屏时防止系统睡眠（任务不断线）", "Prevent system sleep while covered (keep tasks running)"),
+                                   target: self, action: #selector(toggleCoverSleep(_:)))
+        coverSleepCheck.frame = NSRect(x: 24, y: 364, width: 452, height: 20)
+        view.addSubview(coverSleepCheck)
+
+        coverDisplayCheck = NSButton(checkboxWithTitle: I18N.t("遮屏期间保持亮屏", "Keep display awake while covered"),
+                                     target: self, action: #selector(toggleCoverDisplay(_:)))
+        coverDisplayCheck.frame = NSRect(x: 24, y: 338, width: 452, height: 20)
+        view.addSubview(coverDisplayCheck)
+
+        addSeparator(to: view, y: 322)
+
         // MARK: 遮屏内容
         addLabel(I18N.t("遮屏内容", "Cover content"), to: view,
-                 frame: NSRect(x: 24, y: 390, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 294, width: 200, height: 18), bold: true)
 
         let modes: [(ContentMode, String)] = [
             (.aurora, I18N.t("内置极光动画（默认）", "Built-in aurora (default)")),
@@ -28,42 +44,24 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
         ]
         for (index, entry) in modes.enumerated() {
             let button = NSButton(radioButtonWithTitle: entry.1, target: self, action: #selector(modeChanged(_:)))
-            button.frame = NSRect(x: 42, y: 362 - index * 26, width: 360, height: 20)
+            button.frame = NSRect(x: 42, y: 266 - index * 26, width: 360, height: 20)
             button.identifier = NSUserInterfaceItemIdentifier(entry.0.rawValue)
             view.addSubview(button)
             modeButtons.append(button)
         }
 
-        addSeparator(to: view, y: 268)
-
-        // MARK: 行为开关
-        let keepAwake = NSButton(checkboxWithTitle: I18N.t("遮屏期间保持亮屏", "Keep display awake while covered"),
-                                 target: self, action: #selector(toggleKeepAwake(_:)))
-        keepAwake.frame = NSRect(x: 24, y: 240, width: 340, height: 20)
-        view.addSubview(keepAwake)
-        keepAwakeCheck = keepAwake
-
-        addLabel(I18N.t("关闭时遮屏展示会随显示器正常熄屏（其实更隐私）", "When off, the display may sleep normally (arguably more private)"),
-                 to: view, frame: NSRect(x: 42, y: 222, width: 440, height: 14), small: true)
-
-        let launch = NSButton(checkboxWithTitle: I18N.t("开机自启", "Launch at login"),
-                              target: self, action: #selector(toggleLaunchAtLogin(_:)))
-        launch.frame = NSRect(x: 24, y: 196, width: 340, height: 20)
-        view.addSubview(launch)
-        launchCheck = launch
-
-        addSeparator(to: view, y: 180)
+        addSeparator(to: view, y: 156)
 
         // MARK: 自定义文案
         addLabel(I18N.t("自定义轮播文案", "Cover messages"), to: view,
-                 frame: NSRect(x: 24, y: 152, width: 200, height: 18), bold: true)
+                 frame: NSRect(x: 24, y: 128, width: 200, height: 18), bold: true)
         addLabel(I18N.t("每行一句，遮屏时在屏幕底部轮播；清空保存则恢复默认。", "One line per message, rotated at the bottom. Save empty to restore defaults."),
-                 to: view, frame: NSRect(x: 24, y: 134, width: 460, height: 14), small: true)
+                 to: view, frame: NSRect(x: 24, y: 110, width: 460, height: 14), small: true)
 
-        let scroll = NSScrollView(frame: NSRect(x: 24, y: 44, width: 452, height: 84))
+        let scroll = NSScrollView(frame: NSRect(x: 24, y: 40, width: 452, height: 64))
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
-        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 450, height: 82))
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 450, height: 62))
         textView.font = .systemFont(ofSize: 13)
         textView.isRichText = false
         textView.delegate = self
@@ -73,19 +71,18 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
 
         let reset = NSButton(title: I18N.t("恢复默认", "Defaults"), target: self, action: #selector(resetMessages))
         reset.bezelStyle = .rounded
-        reset.frame = NSRect(x: 24, y: 12, width: 86, height: 26)
+        reset.frame = NSRect(x: 24, y: 8, width: 86, height: 26)
         view.addSubview(reset)
 
-        let save = NSButton(title: I18N.t("保存", "Save"), target: self, action: #selector(saveMessages))
-        save.bezelStyle = .rounded
-        save.keyEquivalent = "\r"
-        save.frame = NSRect(x: 390, y: 12, width: 86, height: 26)
-        save.isEnabled = false
-        view.addSubview(save)
-        saveButton = save
+        saveButton = NSButton(title: I18N.t("保存", "Save"), target: self, action: #selector(saveMessages))
+        saveButton.bezelStyle = .rounded
+        saveButton.keyEquivalent = "\r"
+        saveButton.frame = NSRect(x: 390, y: 8, width: 86, height: 26)
+        saveButton.isEnabled = false
+        view.addSubview(saveButton)
 
         self.view = view
-        preferredContentSize = Self.pageSize  // 供设置窗口贴合高度（子 view 会被拉伸，不能用 frame）
+        preferredContentSize = Self.pageSize
         refresh()
     }
 
@@ -93,8 +90,8 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
 
     private func refresh() {
         refreshModeButtons()
-        keepAwakeCheck.state = Settings.shared.keepAwakeWhileCovered ? .on : .off
-        launchCheck.state = LaunchAtLogin.isEnabled ? .on : .off
+        coverSleepCheck.state = Settings.shared.coverPreventSystemSleep ? .on : .off
+        coverDisplayCheck.state = Settings.shared.keepAwakeWhileCovered ? .on : .off
         let custom = Settings.shared.customMessages
         messagesTextView.string = (custom.isEmpty ? Settings.shared.messages : custom).joined(separator: "\n")
         saveButton.isEnabled = false
@@ -155,7 +152,14 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
         return panel.url
     }
 
-    @objc private func toggleKeepAwake(_ sender: NSButton) {
+    @objc private func toggleCoverSleep(_ sender: NSButton) {
+        Settings.shared.coverPreventSystemSleep = sender.state == .on
+        if CoverController.shared.isCovered {
+            StayAwakeEngine.shared.setTrigger(.cover, active: sender.state == .on)
+        }
+    }
+
+    @objc private func toggleCoverDisplay(_ sender: NSButton) {
         Settings.shared.keepAwakeWhileCovered = sender.state == .on
         if CoverController.shared.isCovered {
             if Settings.shared.keepAwakeWhileCovered {
@@ -164,11 +168,6 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
                 KeepAwake.end()
             }
         }
-    }
-
-    @objc private func toggleLaunchAtLogin(_ sender: NSButton) {
-        LaunchAtLogin.setEnabled(sender.state == .on)
-        sender.state = LaunchAtLogin.isEnabled ? .on : .off
     }
 
     @objc private func saveMessages() {
@@ -183,10 +182,6 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
 
     @objc private func resetMessages() {
         messagesTextView.string = Settings.shared.messages.joined(separator: "\n")
-        saveButton.isEnabled = true
-    }
-
-    func textDidChange(_ notification: Notification) {
         saveButton.isEnabled = true
     }
 
@@ -208,5 +203,11 @@ final class GeneralSettingsViewController: NSViewController, NSTextViewDelegate 
         let box = NSBox(frame: NSRect(x: 24, y: y, width: 452, height: 4))
         box.boxType = .separator
         view.addSubview(box)
+    }
+}
+
+extension CoverSettingsViewController: NSTextViewDelegate {
+    func textDidChange(_ notification: Notification) {
+        saveButton.isEnabled = true
     }
 }

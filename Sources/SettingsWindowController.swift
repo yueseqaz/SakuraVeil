@@ -3,16 +3,16 @@ import Cocoa
 /// 设置窗口：工具栏式三个标签页（通用 / 安全 / 关于）。
 final class SettingsTabViewController: NSTabViewController {
 
-    private let generalVC = GeneralSettingsViewController()
     private let stayAwakeVC = StayAwakeSettingsViewController()
+    private let coverVC = CoverSettingsViewController()
     private let securityVC = SecuritySettingsViewController()
     private let aboutVC = AboutViewController()
 
     init() {
         super.init(nibName: nil, bundle: nil)
         tabStyle = .toolbar
-        addTab(generalVC, label: I18N.t("通用", "General"), symbol: "gearshape")
         addTab(stayAwakeVC, label: I18N.t("保持唤醒", "Stay Awake"), symbol: "bolt")
+        addTab(coverVC, label: I18N.t("遮屏", "Cover"), symbol: "eye.slash")
         addTab(securityVC, label: I18N.t("安全", "Security"), symbol: "lock")
         addTab(aboutVC, label: I18N.t("关于", "About"), symbol: "info.circle")
     }
