@@ -2,8 +2,8 @@
 
 # SakuraVeil 樱幕
 
-**macOS 菜单栏隐私遮屏工具 —— 跑任务离开时，一键把屏幕变成幕布**
-**A macOS menu-bar privacy curtain — one keystroke, and your screen is hidden while your tasks keep running.**
+**macOS 菜单栏防休眠工具 —— 一键保持清醒跑通宵，可选隐私幕布护屏**
+**A macOS menu-bar stay-awake tool — one keystroke keeps your Mac running all night, with an optional privacy curtain.**
 
 ![macOS](https://img.shields.io/badge/macOS-13%2B-black)
 ![Swift](https://img.shields.io/badge/Swift-5-orange)

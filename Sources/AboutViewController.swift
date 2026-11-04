@@ -36,8 +36,8 @@ final class AboutViewController: NSViewController {
 
         // 简介
         let intro = NSTextField(wrappingLabelWithString: I18N.t(
-            "跑任务离开时的一键隐私幕布：动画 / 视频 / 壁纸盖住屏幕，任务在后台照常运行，只有快捷键或密码能解开。",
-            "A one-key privacy curtain: cover the screen with an aurora, video or wallpaper while your tasks keep running. Unlock only with the hotkey or your password."
+            "一键防休眠的菜单栏工具：任务跑通宵，Mac 不睡；可选隐私幕布（动画 / 视频 / 壁纸），人走也不怕被看。",
+            "A stay-awake-first menu bar tool: one keystroke keeps your Mac awake all night, with an optional privacy curtain while you're away."
         ))
         intro.frame = NSRect(x: 56, y: 52, width: 388, height: 40)
         intro.alignment = .center

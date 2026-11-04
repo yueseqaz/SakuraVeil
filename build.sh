@@ -7,8 +7,8 @@
 set -eo pipefail
 
 APP_NAME="SakuraVeil"
-APP_VERSION="1.2.1"
-APP_BUILD="121"
+APP_VERSION="1.2.2"
+APP_BUILD="122"
 BUILD_DIR="build"
 APP_BUNDLE="$APP_NAME.app"
 ICONSET_DIR="$BUILD_DIR/AppIcon.iconset"
@@ -37,12 +37,13 @@ NSGradient(colors: [
     NSColor(calibratedRed: 0.85, green: 0.28, blue: 0.56, alpha: 1),
 ])?.draw(in: bg, angle: -55)
 
-if let symbol = NSImage(systemSymbolName: "eye.slash.fill", accessibilityDescription: nil) {
-    let cfg = NSImage.SymbolConfiguration(pointSize: 400, weight: .bold)
-    let sym = symbol.withSymbolConfiguration(cfg) ?? symbol
-    sym.isTemplate = true
-    NSColor.white.set()
-    sym.draw(in: NSRect(x: 292, y: 312, width: 440, height: 400))
+if let symbol = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil) {
+    let sizeCfg = NSImage.SymbolConfiguration(pointSize: 380, weight: .heavy)
+    let colorCfg = NSImage.SymbolConfiguration(paletteColors: [.white])
+    var sym = symbol.withSymbolConfiguration(sizeCfg) ?? symbol
+    sym = sym.withSymbolConfiguration(colorCfg) ?? sym
+    sym.isTemplate = false  // 用调色板白色渲染，避免脚本上下文里 template 变黑
+    sym.draw(in: NSRect(x: 272, y: 282, width: 480, height: 460))
 }
 image.unlockFocus()
 
