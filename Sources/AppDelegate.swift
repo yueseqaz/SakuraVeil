@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var statusMenu: NSMenu?
     private var settingsWindowController: SettingsWindowController?
+    private var rightClickMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         HotkeyCenter.shared.onKeyDown = { [weak self] id in
@@ -51,6 +52,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if let rightClickMonitor {
+            NSEvent.removeMonitor(rightClickMonitor)
+        }
+        rightClickMonitor = nil
         HotkeyCenter.shared.unregisterAll()
         StayAwakeEngine.shared.uninstallTriggerObservers()
         KeepAwake.end()
@@ -99,15 +104,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.autoenablesItems = false
         statusMenu = menu
         statusItem = item
-        // 状态项按钮换成自定义子类：mouseDown / rightMouseDown 由系统区分，杜绝左右键混淆
+        // 状态项按钮换成自定义子类处理左键；
+        // 右键在各版本 macOS 上不会派发 rightMouseDown，用本地事件监听统一拦截。
         if let button = item.button {
             object_setClass(button, StatusItemButton.self)
             button.svLeftClickHandler = { [weak self] in
                 self?.toggleStayAwake()
             }
-            button.svRightClickHandler = { [weak self] in
-                self?.popUpStatusMenu()
-            }
+        }
+        rightClickMonitor = NSEvent.addLocalMonitorForEvents(matching: [.rightMouseUp, .otherMouseUp]) { [weak self] event in
+            guard let self,
+                  event.window === self.statusItem?.button?.window else { return event }
+            self.popUpStatusMenu()
+            return nil  // 吞掉，避免再走按钮事件链
         }
     }
 
@@ -164,26 +173,15 @@ final class StatusItemButton: NSStatusBarButton {
             self?.svLeftClickHandler?()
         }
     }
-
-    override func rightMouseDown(with event: NSEvent) {
-        DispatchQueue.main.async { [weak self] in
-            self?.svRightClickHandler?()
-        }
-    }
+    // 右键由 AppDelegate 的本地事件监听器处理（rightMouseDown 在状态栏按钮上不可靠）
 }
 
 private var svLeftKey: UInt8 = 0
-private var svRightKey: UInt8 = 0
 
 extension NSStatusBarButton {
     var svLeftClickHandler: (() -> Void)? {
         get { objc_getAssociatedObject(self, &svLeftKey) as? (() -> Void) }
         set { objc_setAssociatedObject(self, &svLeftKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-
-    var svRightClickHandler: (() -> Void)? {
-        get { objc_getAssociatedObject(self, &svRightKey) as? (() -> Void) }
-        set { objc_setAssociatedObject(self, &svRightKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
 }
 

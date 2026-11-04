@@ -7,8 +7,8 @@
 set -eo pipefail
 
 APP_NAME="SakuraVeil"
-APP_VERSION="1.2.3"
-APP_BUILD="123"
+APP_VERSION="1.2.4"
+APP_BUILD="124"
 BUILD_DIR="build"
 APP_BUNDLE="$APP_NAME.app"
 ICONSET_DIR="$BUILD_DIR/AppIcon.iconset"
